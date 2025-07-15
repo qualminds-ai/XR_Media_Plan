@@ -195,7 +195,7 @@ const Media = () => {
     <div className="media-container">
       <div className="header">
         <h1>Media Plan Manager</h1>
-        <p>Upload your Excel (.xlsx, .xls) or CSV files and manage your media campaigns</p>
+        <p>Upload your Excel (.xlsx, .xls) or CSV files and customize your media campaigns</p>
       </div>
 
       <div className="upload-section">
