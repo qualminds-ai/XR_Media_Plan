@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Header from './Header';
 import Media from './Media';
-import './App.css';
 
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
