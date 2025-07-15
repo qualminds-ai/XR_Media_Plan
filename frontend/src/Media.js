@@ -4,10 +4,9 @@ import './Media.css';
 
 const Media = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [fileInfo, setFileInfo] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -15,7 +14,21 @@ const Media = () => {
   const [creativeEndDate, setCreativeEndDate] = useState('');
   const [isciPllf, setIsciPllf] = useState('');
   const [isciMonth, setIsciMonth] = useState('');
+  const [processProgress, setProcessProgress] = useState(0);
   const fileInputRef = useRef(null);
+
+  const resetAllFields = () => {
+    setSelectedFile(null);
+    setStartDate('');
+    setEndDate('');
+    setCreativeStartDate('');
+    setCreativeEndDate('');
+    setIsciPllf('');
+    setIsciMonth('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleFileSelect = (file) => {
     if (file && (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
@@ -26,7 +39,6 @@ const Media = () => {
                  file.name.endsWith('.csv'))) {
       setSelectedFile(file);
       setMessage('');
-      setFileInfo(null);
     } else {
       setMessage('Please select a valid Excel file (.xlsx, .xls) or CSV file');
       setMessageType('error');
@@ -103,93 +115,94 @@ const Media = () => {
     setIsciMonth(event.target.value);
   };
 
-  const handleGenerate = () => {
-    // Collect all form data
-    const formData = {
-      placementStartDate: startDate,
-      placementEndDate: endDate,
-      creativeStartDate: creativeStartDate,
-      creativeEndDate: creativeEndDate,
-      isciPllf: isciPllf,
-      isciMonth: isciMonth,
-      fileInfo: fileInfo
-    };
-    
-    console.log('Generate button clicked with data:', formData);
-    // Add your generation logic here
-  };
-
-  const handleUpload = async () => {
+  const handleGenerate = async () => {
+    // Validate that we have a selected file
     if (!selectedFile) {
-      setMessage('Please select a file first');
+      setMessage('Please select a file first before generating');
       setMessageType('error');
       return;
     }
 
-    setUploading(true);
-    setMessage('');
+    // Validate that all required fields are filled
+    if (!startDate || !endDate || !creativeStartDate || !creativeEndDate) {
+      setMessage('Please fill in all date fields before generating');
+      setMessageType('error');
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+    setProcessing(true);
+    setMessage('');
+    setProcessProgress(0);
 
     try {
-      const response = await axios.post('/api/upload', formData, {
+      // Create FormData to send file and data
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('placementStartDate', startDate);
+      formData.append('placementEndDate', endDate);
+      formData.append('creativeStartDate', creativeStartDate);
+      formData.append('creativeEndDate', creativeEndDate);
+      formData.append('isciPllf', isciPllf);
+      formData.append('isciMonth', isciMonth);
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProcessProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      setMessage('Processing your media plan...');
+      setMessageType('info');
+
+      // Send request to backend
+      const response = await axios.post('/api/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        responseType: 'blob', // Important for file download
       });
 
-      setMessage(response.data.message);
+      clearInterval(progressInterval);
+      setProcessProgress(100);
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `processed_media_plan_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setMessage('Media plan generated and downloaded successfully!');
       setMessageType('success');
-      setFileInfo(response.data.file_info);
       
-      // Clear the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      setSelectedFile(null);
+      // Reset all form fields after successful generation
+      setTimeout(() => {
+        resetAllFields();
+        setMessage('');
+        setMessageType('');
+      }, 2000);
       
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Upload failed');
+      console.error('Generation error:', error);
+      setMessage(error.response?.data?.error || 'Failed to generate media plan');
       setMessageType('error');
     } finally {
-      setUploading(false);
+      setProcessing(false);
+      setTimeout(() => {
+        setProcessProgress(0);
+      }, 2000);
     }
   };
 
-  const renderPreviewTable = () => {
-    if (!fileInfo || !fileInfo.preview || fileInfo.preview.length === 0) {
-      return null;
-    }
 
-    const columns = fileInfo.column_names || Object.keys(fileInfo.preview[0]);
-
-    return (
-      <div>
-        <h4>Data Preview (First 5 rows):</h4>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="preview-table">
-            <thead>
-              <tr>
-                {columns.map((column, index) => (
-                  <th key={index}>{column}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {fileInfo.preview.map((row, index) => (
-                <tr key={index}>
-                  {columns.map((column, colIndex) => (
-                    <td key={colIndex}>{row[column] || ''}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="media-container">
@@ -197,6 +210,12 @@ const Media = () => {
         <h1>Media Plan Manager</h1>
         <p>Upload your Excel (.xlsx, .xls) or CSV files and customize your media campaigns</p>
       </div>
+      
+      {message && (
+        <div className={`top-message ${messageType}`}>
+          {message}
+        </div>
+      )}
 
       <div className="upload-section">
         <h3>File Upload</h3>
@@ -223,20 +242,6 @@ const Media = () => {
           <div className="file-details">
             <p><strong>Selected file:</strong> {selectedFile.name}</p>
             <p><strong>Size:</strong> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-          </div>
-        )}
-
-        <button 
-          className="upload-btn" 
-          onClick={handleUpload} 
-          disabled={!selectedFile || uploading}
-        >
-          {uploading ? 'Uploading...' : 'Upload File'}
-        </button>
-
-        {message && (
-          <div className={`message ${messageType}`}>
-            {message}
           </div>
         )}
       </div>
@@ -336,52 +341,25 @@ const Media = () => {
         </div>
       </div>
 
-      {fileInfo && (
-        <div className="file-info">
-          <h3>File Information</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <strong>Filename:</strong>
-              {fileInfo.filename}
-            </div>
-            <div className="info-item">
-              <strong>Total Rows:</strong>
-              {fileInfo.rows}
-            </div>
-            <div className="info-item">
-              <strong>Total Columns:</strong>
-              {fileInfo.columns}
-            </div>
-          </div>
-
-          {fileInfo.column_names && (
-            <div>
-              <h4>Column Names:</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
-                {fileInfo.column_names.map((column, index) => (
-                  <span key={index} style={{ 
-                    background: '#e9ecef', 
-                    padding: '5px 10px', 
-                    borderRadius: '15px', 
-                    fontSize: '14px' 
-                  }}>
-                    {column}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {renderPreviewTable()}
-        </div>
-      )}
-
       <div className="generate-section">
+        {processing && (
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${processProgress}%` }}
+              ></div>
+            </div>
+            <div className="progress-text">{processProgress}% Complete</div>
+          </div>
+        )}
+        
         <button 
           className="generate-btn" 
           onClick={handleGenerate}
+          disabled={processing || !selectedFile}
         >
-          Generate
+          {processing ? 'Processing...' : 'Generate Media Plan'}
         </button>
       </div>
     </div>
