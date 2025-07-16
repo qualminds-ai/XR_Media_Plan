@@ -285,12 +285,6 @@ const Media = () => {
         <h1>Media Plan Manager</h1>
         <p>Upload your Excel (.xlsx, .xls) or CSV files and customize your media campaigns</p>
       </div>
-      
-      {message && (
-        <div className={`top-message ${messageType}`}>
-          {message}
-        </div>
-      )}
 
       <div className="upload-section">
         <h3>File Upload</h3>
