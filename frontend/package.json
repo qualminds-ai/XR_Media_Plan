@@ -2,6 +2,7 @@
   "name": "excel-uploader-frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://qualminds-ai.github.io/XR_Media_Plan/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
