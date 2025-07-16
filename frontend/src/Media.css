@@ -11,6 +11,15 @@
   color: #333;
 }
 
+.header h1 {
+  margin-bottom: 10px;
+}
+
+.header p {
+  margin-top: 0;
+  margin-bottom: 40px;
+}
+
 .top-message {
   margin: 20px auto;
   padding: 15px 25px;
@@ -711,11 +720,6 @@
   height: 85%;
 }
 
-.placements-section:hover {
-  border-color: #007bff;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
-}
-
 .placements-section h3 {
   margin-top: 0;
   margin-bottom: 20px;
@@ -772,12 +776,6 @@
   transition: all 0.2s ease;
   height: 85%;
 }
-
-.creative-section:hover {
-  border-color: #28a745;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.1);
-}
-
 .creative-section h3 {
   margin-top: 0;
   margin-bottom: 20px;
