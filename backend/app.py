@@ -109,41 +109,82 @@ def generate_media_plan():
             # For Excel files, preserve original formatting
             # Load the original Excel file
             wb = load_workbook(file, data_only=False)
+            
+            # Print all sheet names to console
+            sheet_names = wb.sheetnames
+            print("=" * 50)
+            print(f"Excel file uploaded: {file.filename}")
+            print(f"Number of sheets: {len(sheet_names)}")
+            print("Sheet names (tabs):")
+            for i, sheet_name in enumerate(sheet_names, 1):
+                print(f"  {i}. {sheet_name}")
+            print("=" * 50)
+            
             ws = wb.active  # Get the active worksheet
             
-            # Find the last column to add new data
+            # Find existing "Start Date" and "End Date" columns
+            start_date_col = None
+            end_date_col = None
+            creative_start_col = None
+            creative_end_col = None
+            
+            # Search for existing columns in the first row
+            for col in range(1, ws.max_column + 1):
+                cell_value = ws.cell(row=1, column=col).value
+                if cell_value:
+                    cell_value = str(cell_value).strip().lower()
+                    if 'start date' in cell_value and not creative_start_col:
+                        start_date_col = col
+                        print(f"Found 'Start Date' column at position {col}")
+                    elif 'end date' in cell_value and not creative_end_col:
+                        end_date_col = col
+                        print(f"Found 'End Date' column at position {col}")
+            
+            # Update existing Start Date and End Date columns if found
+            max_row = ws.max_row
+            if start_date_col:
+                for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                    ws.cell(row=row, column=start_date_col, value=placement_start)
+                print(f"Updated {max_row - 1} rows in 'Start Date' column with: {placement_start}")
+            
+            if end_date_col:
+                for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                    ws.cell(row=row, column=end_date_col, value=placement_end)
+                print(f"Updated {max_row - 1} rows in 'End Date' column with: {placement_end}")
+            
+            # Find the last column to add any additional new data
             max_col = ws.max_column
             
-            # Add headers for new columns
-            headers = [
-                'Placement_Start_Date',
-                'Placement_End_Date', 
-                'Creative_Start_Date',
-                'Creative_End_Date',
-                'ISCI_PLLF',
-                'ISCI_Month',
-                'Processed_Date'
-            ]
+            # Add headers for additional new columns (only the ones not already updated)
+            additional_headers = []
+            additional_data = []
             
-            # Add headers in the first row
-            for i, header in enumerate(headers, start=1):
+            if creative_start:
+                additional_headers.append('Creative_Start_Date')
+                additional_data.append(creative_start)
+                
+            if creative_end:
+                additional_headers.append('Creative_End_Date') 
+                additional_data.append(creative_end)
+                
+            if isci_pllf:
+                additional_headers.append('ISCI_PLLF')
+                additional_data.append(isci_pllf)
+                
+            if isci_month:
+                additional_headers.append('ISCI_Month')
+                additional_data.append(isci_month)
+            
+            additional_headers.append('Processed_Date')
+            additional_data.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            
+            # Add additional headers in the first row
+            for i, header in enumerate(additional_headers, start=1):
                 ws.cell(row=1, column=max_col + i, value=header)
             
-            # Add data to all rows (starting from row 2)
-            form_data = [
-                placement_start,
-                placement_end,
-                creative_start,
-                creative_end,
-                isci_pllf,
-                isci_month,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            ]
-            
-            # Add form data to each row
-            max_row = ws.max_row
+            # Add additional data to all rows (starting from row 2)
             for row in range(2, max_row + 1):  # Start from row 2 (skip header)
-                for i, data in enumerate(form_data, start=1):
+                for i, data in enumerate(additional_data, start=1):
                     ws.cell(row=row, column=max_col + i, value=data)
             
             # Save to memory
