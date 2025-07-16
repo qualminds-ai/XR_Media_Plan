@@ -1,11 +1,12 @@
 """
 Media Plan Processing Business Logic
 """
-import pandas as pd
 import os
 from datetime import datetime
 import io
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
+import csv
+from io import StringIO
 
 
 class MediaPlanProcessor:
@@ -22,39 +23,97 @@ class MediaPlanProcessor:
     def get_file_info(self, filepath, filename):
         """Extract basic information from uploaded file"""
         try:
-            # Read the file based on extension
             if filename.endswith('.csv'):
-                df = pd.read_csv(filepath)
+                # Read CSV file
+                with open(filepath, 'r', encoding='utf-8') as file:
+                    csv_reader = csv.reader(file)
+                    headers = next(csv_reader, [])
+                    rows = list(csv_reader)
+                    
+                return {
+                    'filename': filename,
+                    'rows': len(rows),
+                    'columns': len(headers),
+                    'column_names': headers,
+                    'preview': rows[:5] if len(rows) > 0 else []
+                }
             else:
-                df = pd.read_excel(filepath)
-            
-            return {
-                'filename': filename,
-                'rows': len(df),
-                'columns': len(df.columns),
-                'column_names': df.columns.tolist(),
-                'preview': df.head(5).to_dict('records') if len(df) > 0 else []
-            }
+                # Read Excel file
+                wb = load_workbook(filepath, data_only=True)
+                ws = wb.active
+                
+                # Get headers from first row
+                headers = []
+                for col in range(1, ws.max_column + 1):
+                    cell_value = ws.cell(row=1, column=col).value
+                    headers.append(str(cell_value) if cell_value else f"Column_{col}")
+                
+                # Get preview data
+                preview = []
+                for row in range(2, min(7, ws.max_row + 1)):  # Get first 5 data rows
+                    row_data = []
+                    for col in range(1, ws.max_column + 1):
+                        cell_value = ws.cell(row=row, column=col).value
+                        row_data.append(str(cell_value) if cell_value else "")
+                    preview.append(row_data)
+                
+                return {
+                    'filename': filename,
+                    'rows': ws.max_row - 1,  # Subtract header row
+                    'columns': len(headers),
+                    'column_names': headers,
+                    'preview': preview
+                }
         except Exception as e:
             raise Exception(f'Error processing file: {str(e)}')
     
     def process_csv_file(self, file, form_data):
         """Process CSV files and convert to Excel with form data"""
-        df = pd.read_csv(file)
+        # Create new workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Processed_Media_Plan"
         
-        # Add the form data as new columns
-        df['Placement_Start_Date'] = form_data['placement_start']
-        df['Placement_End_Date'] = form_data['placement_end']
-        df['Creative_Start_Date'] = form_data['creative_start']
-        df['Creative_End_Date'] = form_data['creative_end']
-        df['ISCI_PLLF'] = form_data['isci_pllf']
-        df['ISCI_Month'] = form_data['isci_month']
-        df['Processed_Date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Read CSV data
+        file.seek(0)  # Reset file pointer
+        content = file.read().decode('utf-8')
+        csv_reader = csv.reader(StringIO(content))
         
-        # Create Excel file in memory
+        # Write CSV data to Excel
+        for row_num, row in enumerate(csv_reader, 1):
+            for col_num, value in enumerate(row, 1):
+                ws.cell(row=row_num, column=col_num, value=value)
+        
+        # Find the last column to add additional data
+        max_col = ws.max_column
+        
+        # Add additional headers and data
+        additional_headers = [
+            'Placement_Start_Date', 'Placement_End_Date',
+            'Creative_Start_Date', 'Creative_End_Date',
+            'ISCI_PLLF', 'ISCI_Month', 'Processed_Date'
+        ]
+        
+        additional_data = [
+            form_data['placement_start'], form_data['placement_end'],
+            form_data['creative_start'], form_data['creative_end'],
+            form_data['isci_pllf'], form_data['isci_month'],
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        ]
+        
+        # Add headers
+        for i, header in enumerate(additional_headers, start=1):
+            ws.cell(row=1, column=max_col + i, value=header)
+        
+        # Add data to all rows (starting from row 2)
+        max_row = ws.max_row
+        for row in range(2, max_row + 1):
+            for i, data in enumerate(additional_data, start=1):
+                ws.cell(row=row, column=max_col + i, value=data)
+        
+        # Save to memory
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Processed_Media_Plan', index=False)
+        wb.save(output)
         output.seek(0)
         
         return output
