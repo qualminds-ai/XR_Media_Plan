@@ -120,52 +120,82 @@ def generate_media_plan():
                 print(f"  {i}. {sheet_name}")
             print("=" * 50)
             
-            ws = wb.active  # Get the active worksheet
+            # Process each sheet based on its name
+            for sheet_name in sheet_names:
+                ws = wb[sheet_name]
+                print(f"\nProcessing sheet: {sheet_name}")
+                
+                # Check if this is the Placements sheet
+                if 'placement' in sheet_name.lower():
+                    print("Detected Placements sheet - looking for Start Date and End Date columns")
+                    # Find existing "Start Date" and "End Date" columns
+                    start_date_col = None
+                    end_date_col = None
+                    
+                    # Search for existing columns in the first row
+                    for col in range(1, ws.max_column + 1):
+                        cell_value = ws.cell(row=1, column=col).value
+                        if cell_value:
+                            cell_value = str(cell_value).strip().lower()
+                            if 'start date' in cell_value:
+                                start_date_col = col
+                                print(f"Found 'Start Date' column at position {col}")
+                            elif 'end date' in cell_value:
+                                end_date_col = col
+                                print(f"Found 'End Date' column at position {col}")
+                    
+                    # Update existing Start Date and End Date columns if found
+                    max_row = ws.max_row
+                    if start_date_col:
+                        for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                            ws.cell(row=row, column=start_date_col, value=placement_start)
+                        print(f"Updated {max_row - 1} rows in 'Start Date' column with: {placement_start}")
+                    
+                    if end_date_col:
+                        for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                            ws.cell(row=row, column=end_date_col, value=placement_end)
+                        print(f"Updated {max_row - 1} rows in 'End Date' column with: {placement_end}")
+                
+                # Check if this is the Creative sheet
+                elif 'creative' in sheet_name.lower():
+                    print("Detected Creative sheet - looking for FlightStart and FlightEnd columns")
+                    # Find existing "FlightStart" and "FlightEnd" columns
+                    flight_start_col = None
+                    flight_end_col = None
+                    
+                    # Search for existing columns in the first row
+                    for col in range(1, ws.max_column + 1):
+                        cell_value = ws.cell(row=1, column=col).value
+                        if cell_value:
+                            cell_value = str(cell_value).strip().lower()
+                            if 'flightstart' in cell_value:
+                                flight_start_col = col
+                                print(f"Found 'FlightStart' column at position {col}")
+                            elif 'flightend' in cell_value:
+                                flight_end_col = col
+                                print(f"Found 'FlightEnd' column at position {col}")
+                    
+                    # Update existing FlightStart and FlightEnd columns if found
+                    max_row = ws.max_row
+                    if flight_start_col:
+                        for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                            ws.cell(row=row, column=flight_start_col, value=creative_start)
+                        print(f"Updated {max_row - 1} rows in 'FlightStart' column with: {creative_start}")
+                    
+                    if flight_end_col:
+                        for row in range(2, max_row + 1):  # Start from row 2 (skip header)
+                            ws.cell(row=row, column=flight_end_col, value=creative_end)
+                        print(f"Updated {max_row - 1} rows in 'FlightEnd' column with: {creative_end}")
             
-            # Find existing "Start Date" and "End Date" columns
-            start_date_col = None
-            end_date_col = None
-            creative_start_col = None
-            creative_end_col = None
-            
-            # Search for existing columns in the first row
-            for col in range(1, ws.max_column + 1):
-                cell_value = ws.cell(row=1, column=col).value
-                if cell_value:
-                    cell_value = str(cell_value).strip().lower()
-                    if 'start date' in cell_value and not creative_start_col:
-                        start_date_col = col
-                        print(f"Found 'Start Date' column at position {col}")
-                    elif 'end date' in cell_value and not creative_end_col:
-                        end_date_col = col
-                        print(f"Found 'End Date' column at position {col}")
-            
-            # Update existing Start Date and End Date columns if found
-            max_row = ws.max_row
-            if start_date_col:
-                for row in range(2, max_row + 1):  # Start from row 2 (skip header)
-                    ws.cell(row=row, column=start_date_col, value=placement_start)
-                print(f"Updated {max_row - 1} rows in 'Start Date' column with: {placement_start}")
-            
-            if end_date_col:
-                for row in range(2, max_row + 1):  # Start from row 2 (skip header)
-                    ws.cell(row=row, column=end_date_col, value=placement_end)
-                print(f"Updated {max_row - 1} rows in 'End Date' column with: {placement_end}")
+            # Add additional data to the first/active sheet
+            ws = wb.active
             
             # Find the last column to add any additional new data
             max_col = ws.max_column
             
-            # Add headers for additional new columns (only the ones not already updated)
+            # Add headers for additional new columns
             additional_headers = []
             additional_data = []
-            
-            if creative_start:
-                additional_headers.append('Creative_Start_Date')
-                additional_data.append(creative_start)
-                
-            if creative_end:
-                additional_headers.append('Creative_End_Date') 
-                additional_data.append(creative_end)
                 
             if isci_pllf:
                 additional_headers.append('ISCI_PLLF')
@@ -183,6 +213,7 @@ def generate_media_plan():
                 ws.cell(row=1, column=max_col + i, value=header)
             
             # Add additional data to all rows (starting from row 2)
+            max_row = ws.max_row
             for row in range(2, max_row + 1):  # Start from row 2 (skip header)
                 for i, data in enumerate(additional_data, start=1):
                     ws.cell(row=row, column=max_col + i, value=data)
