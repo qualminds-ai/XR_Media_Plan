@@ -17,6 +17,15 @@ const Media = () => {
   const [processProgress, setProcessProgress] = useState(0);
   const fileInputRef = useRef(null);
 
+  // Error states for validation
+  const [fileError, setFileError] = useState(false);
+  const [startDateError, setStartDateError] = useState(false);
+  const [endDateError, setEndDateError] = useState(false);
+  const [creativeStartDateError, setCreativeStartDateError] = useState(false);
+  const [creativeEndDateError, setCreativeEndDateError] = useState(false);
+  const [isciPlflfError, setIsciPlflfError] = useState(false);
+  const [isciMonthError, setIsciMonthError] = useState(false);
+
   const resetAllFields = () => {
     setSelectedFile(null);
     setStartDate('');
@@ -25,6 +34,14 @@ const Media = () => {
     setCreativeEndDate('');
     setIsciPllf('');
     setIsciMonth('');
+    // Reset error states
+    setFileError(false);
+    setStartDateError(false);
+    setEndDateError(false);
+    setCreativeStartDateError(false);
+    setCreativeEndDateError(false);
+    setIsciPlflfError(false);
+    setIsciMonthError(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -38,6 +55,7 @@ const Media = () => {
                  file.name.endsWith('.xls') || 
                  file.name.endsWith('.csv'))) {
       setSelectedFile(file);
+      setFileError(false);
       setMessage('');
     } else {
       setMessage('Please select a valid Excel file (.xlsx, .xls) or CSV file');
@@ -90,43 +108,83 @@ const Media = () => {
   const handleStartDateChange = (event) => {
     const isoDate = event.target.value;
     setStartDate(formatDateToMMDDYYYY(isoDate));
+    setStartDateError(false);
   };
 
   const handleEndDateChange = (event) => {
     const isoDate = event.target.value;
     setEndDate(formatDateToMMDDYYYY(isoDate));
+    setEndDateError(false);
   };
 
   const handleCreativeStartDateChange = (event) => {
     const isoDate = event.target.value;
     setCreativeStartDate(formatDateToMMDDYYYY(isoDate));
+    setCreativeStartDateError(false);
   };
 
   const handleCreativeEndDateChange = (event) => {
     const isoDate = event.target.value;
     setCreativeEndDate(formatDateToMMDDYYYY(isoDate));
+    setCreativeEndDateError(false);
   };
 
   const handleIsciPllf = (event) => {
     setIsciPllf(event.target.value);
+    setIsciPlflfError(false);
   };
 
   const handleIsciMonth = (event) => {
     setIsciMonth(event.target.value);
+    setIsciMonthError(false);
   };
 
   const handleGenerate = async () => {
+    // Reset all error states first
+    setFileError(false);
+    setStartDateError(false);
+    setEndDateError(false);
+    setCreativeStartDateError(false);
+    setCreativeEndDateError(false);
+    setIsciPlflfError(false);
+    setIsciMonthError(false);
+
+    let hasErrors = false;
+
     // Validate that we have a selected file
     if (!selectedFile) {
-      setMessage('Please select a file first before generating');
-      setMessageType('error');
-      return;
+      setFileError(true);
+      hasErrors = true;
     }
 
     // Validate that all required fields are filled
-    if (!startDate || !endDate || !creativeStartDate || !creativeEndDate) {
-      setMessage('Please fill in all date fields before generating');
-      setMessageType('error');
+    if (!startDate) {
+      setStartDateError(true);
+      hasErrors = true;
+    }
+    if (!endDate) {
+      setEndDateError(true);
+      hasErrors = true;
+    }
+    if (!creativeStartDate) {
+      setCreativeStartDateError(true);
+      hasErrors = true;
+    }
+    if (!creativeEndDate) {
+      setCreativeEndDateError(true);
+      hasErrors = true;
+    }
+    if (!isciPllf) {
+      setIsciPlflfError(true);
+      hasErrors = true;
+    }
+    if (!isciMonth) {
+      setIsciMonthError(true);
+      hasErrors = true;
+    }
+
+    // If there are validation errors, don't proceed
+    if (hasErrors) {
       return;
     }
 
@@ -220,7 +278,7 @@ const Media = () => {
       <div className="upload-section">
         <h3>File Upload</h3>
         <div 
-          className={`upload-area ${isDragOver ? 'dragover' : ''}`}
+          className={`upload-area ${isDragOver ? 'dragover' : ''} ${fileError ? 'error' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -257,7 +315,7 @@ const Media = () => {
                 id="startDate"
                 value={formatDateToYYYYMMDD(startDate)}
                 onChange={handleStartDateChange}
-                className="date-input"
+                className={`date-input ${startDateError ? 'error' : ''}`}
               />
             </div>
             <div className="date-input-group">
@@ -267,7 +325,7 @@ const Media = () => {
                 id="endDate"
                 value={formatDateToYYYYMMDD(endDate)}
                 onChange={handleEndDateChange}
-                className="date-input"
+                className={`date-input ${endDateError ? 'error' : ''}`}
               />
             </div>
           </div>
@@ -283,7 +341,7 @@ const Media = () => {
               id="creativeStartDate"
               value={formatDateToYYYYMMDD(creativeStartDate)}
               onChange={handleCreativeStartDateChange}
-              className="date-input"
+              className={`date-input ${creativeStartDateError ? 'error' : ''}`}
             />
           </div>
           <div className="date-input-group">
@@ -293,7 +351,7 @@ const Media = () => {
               id="creativeEndDate"
               value={formatDateToYYYYMMDD(creativeEndDate)}
               onChange={handleCreativeEndDateChange}
-              className="date-input"
+              className={`date-input ${creativeEndDateError ? 'error' : ''}`}
             />
           </div>
         </div>
@@ -306,7 +364,7 @@ const Media = () => {
                 id="isciPllf"
                 value={isciPllf}
                 onChange={handleIsciPllf}
-                className="dropdown-input"
+                className={`dropdown-input ${isciPlflfError ? 'error' : ''}`}
               >
                 <option value="0">Select Creative</option>
                 <option value="PLLF">PLLF</option>
@@ -319,7 +377,7 @@ const Media = () => {
                 id="isciMonth"
                 value={isciMonth}
                 onChange={handleIsciMonth}
-                className="dropdown-input"
+                className={`dropdown-input ${isciMonthError ? 'error' : ''}`}
               >
                 <option value="">Select Month</option>
                 <option value="01">01 - January</option>
