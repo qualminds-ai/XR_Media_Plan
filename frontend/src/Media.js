@@ -264,6 +264,23 @@ const Media = () => {
 
   return (
     <div className="media-container">
+      {processing && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${processProgress}%` }}
+                ></div>
+              </div>
+              <div className="progress-text">{processProgress}% Complete</div>
+              <div className="loading-message">Processing your media plan...</div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="header">
         <h1>Media Plan Manager</h1>
         <p>Upload your Excel (.xlsx, .xls) or CSV files and customize your media campaigns</p>
@@ -401,18 +418,6 @@ const Media = () => {
       </div>
 
       <div className="generate-section">
-        {processing && (
-          <div className="progress-container">
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${processProgress}%` }}
-              ></div>
-            </div>
-            <div className="progress-text">{processProgress}% Complete</div>
-          </div>
-        )}
-        
         <button 
           className="generate-btn" 
           onClick={handleGenerate}
