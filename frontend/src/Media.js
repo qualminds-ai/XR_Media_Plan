@@ -218,7 +218,7 @@ const Media = () => {
       setMessageType('info');
 
       // Send request to backend
-      const response = await axios.post('/api/generate', formData, {
+      const response = await axios.post('https://xr-media-plan-api.onrender.com/api/generate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
