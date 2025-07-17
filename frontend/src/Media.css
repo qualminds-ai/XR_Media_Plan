@@ -971,3 +971,84 @@
     font-size: 14px;
   }
 }
+
+/* Searchable Dropdown Styles */
+.searchable-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-option:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option.no-results {
+  cursor: default;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.dropdown-option.no-results:hover {
+  background-color: white;
+}
+
+/* Ensure dropdown appears above other elements */
+.dropdown-input-group {
+  position: relative;
+  z-index: 1;
+}
+
+/* Enhance the input styling for searchable dropdown */
+.searchable-dropdown .dropdown-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.searchable-dropdown .dropdown-input:focus {
+  border-radius: 6px 6px 0 0;
+}
+
+/* Custom scrollbar for dropdown options */
+.dropdown-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}

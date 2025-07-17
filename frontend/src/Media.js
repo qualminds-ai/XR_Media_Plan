@@ -13,7 +13,19 @@ const Media = () => {
   const [isciPllf, setIsciPllf] = useState('');
   const [isciMonth, setIsciMonth] = useState('');
   const [processProgress, setProcessProgress] = useState(0);
+  const [isciSearchTerm, setIsciSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
+
+  // ISCI Options List
+  const isciOptions = [
+    'CHM', 'CHS', 'HY', 'AOM', 'AKN', 'BH', 'BK', 'BKS', 'BMS', 'BM', 'BNB', 'CCM', 'CWH', 'CH', 'CCH', 'CRV', 'CV', 'CCB', 'DTA', 'DV', 'DMKC', 'FFM', 'FM', 'FYM', 'FS', 'FF', 'GVQ', 'GFE', 'SGF', 'GOC', 'GHFB', 'GH', 'GLH', 'HS', 'HVSR', 'HVB', 'HHB', 'HOS', 'HB', 'COH', 'HOC', 'HE', 'HG', 'HK', 'HSTA', 'HOV', 'HSM', 'IVC', 'IVG', 'IVHU', 'IVH', 'JWHB', 'JWHF', 'JWSH', 'JCH', 'JCKG', 'JCGL', 'JKSCP', 'JKHC', 'KH', 'KMH', 'KVB', 'KOI', 'KLH', 'KHER', 'LK', 'LRB', 'LRW', 'LVCH', 'LH', 'LFR', 'MCGAW', 'MKA', 'MKP', 'MBB', 'MBOB', 'MRV', 'MC', 'MOR', 'PSS', 'MOF', 'MOK', 'MN', 'MVC', 'MWSK', 'MS', 'MV', 'MWA', 'MCM', 'NM', 'PA', 'PLLF', 'PBG', 'PK', 'PKS', 'PV', 'AV', 'RF', 'RDG', 'RDBH', 'RBG', 'RCT', 'RK', 'SH', 'SNT', 'SS', 'SBH', 'SBHS', 'STH', 'SPM', 'SOCL', 'SOW', 'SHS', 'TH', 'TGA', 'TGC', 'TGHN', 'TGM', 'TGSN', 'TGV', 'TV', 'TTRV', 'TT', 'AVC', 'DTK', 'TDMS', 'TWH', 'TMM', 'TOS', 'VEH', 'VLC', 'VMO', 'VCSD', 'VCSB', 'WLS', 'WN', 'WKF', 'WS', 'WVD', 'WH', 'ZFC'
+  ];
+
+  // Filter ISCI options based on search term
+  const filteredIsciOptions = isciOptions.filter(option =>
+    option.toLowerCase().includes(isciSearchTerm.toLowerCase())
+  );
 
   // Error states for validation
   const [fileError, setFileError] = useState(false);
@@ -32,6 +44,8 @@ const Media = () => {
     setCreativeEndDate('');
     setIsciPllf('');
     setIsciMonth('');
+    setIsciSearchTerm('');
+    setIsDropdownOpen(false);
     // Reset error states
     setFileError(false);
     setStartDateError(false);
@@ -124,9 +138,25 @@ const Media = () => {
     setCreativeEndDateError(false);
   };
 
-  const handleIsciPllf = (event) => {
-    setIsciPllf(event.target.value);
+  const handleIsciSelect = (option) => {
+    setIsciPllf(option);
     setIsciPlflfError(false);
+    setIsDropdownOpen(false);
+    setIsciSearchTerm('');
+  };
+
+  const handleIsciSearchChange = (event) => {
+    setIsciSearchTerm(event.target.value);
+    setIsDropdownOpen(true);
+  };
+
+  const handleIsciInputFocus = () => {
+    setIsDropdownOpen(true);
+  };
+
+  const handleIsciInputBlur = () => {
+    // Delay closing to allow option selection
+    setTimeout(() => setIsDropdownOpen(false), 200);
   };
 
   const handleIsciMonth = (event) => {
@@ -356,19 +386,35 @@ const Media = () => {
           <div className="dropdown-inputs">
             <div className="dropdown-input-group">
               <label htmlFor="isciPllf">Creative ISCI:</label>
-              <select
-                id="isciPllf"
-                value={isciPllf}
-                onChange={handleIsciPllf}
-                className={`dropdown-input ${isciPlflfError ? 'error' : ''}`}
-              >
-                <option value="0">Select Creative</option>
-                <option value="PLLF">PLLF</option>
-                <option value="BH">BH</option>
-                <option value="XYZ">XYZ</option>
-                 <option value="PQR">PQR</option>
-                
-              </select>
+              <div className="searchable-dropdown">
+                <input
+                  type="text"
+                  id="isciPllf"
+                  value={isciPllf || isciSearchTerm}
+                  onChange={handleIsciSearchChange}
+                  onFocus={handleIsciInputFocus}
+                  onBlur={handleIsciInputBlur}
+                  placeholder={isciPllf ? isciPllf : "Search or select Creative ISCI..."}
+                  className={`dropdown-input ${isciPlflfError ? 'error' : ''}`}
+                />
+                {isDropdownOpen && (
+                  <div className="dropdown-options">
+                    {filteredIsciOptions.length > 0 ? (
+                      filteredIsciOptions.map((option, index) => (
+                        <div
+                          key={index}
+                          className="dropdown-option"
+                          onClick={() => handleIsciSelect(option)}
+                        >
+                          {option}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="dropdown-option no-results">No results found</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="dropdown-input-group">
               <label htmlFor="isciMonth">Creative Month:</label>
