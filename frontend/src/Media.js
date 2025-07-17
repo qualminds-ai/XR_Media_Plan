@@ -5,8 +5,6 @@ import './Media.css';
 const Media = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [processing, setProcessing] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -56,10 +54,7 @@ const Media = () => {
                  file.name.endsWith('.csv'))) {
       setSelectedFile(file);
       setFileError(false);
-      setMessage('');
     } else {
-      setMessage('Please select a valid Excel file (.xlsx, .xls) or CSV file');
-      setMessageType('error');
       setSelectedFile(null);
     }
   };
@@ -189,7 +184,6 @@ const Media = () => {
     }
 
     setProcessing(true);
-    setMessage('');
     setProcessProgress(0);
 
     try {
@@ -214,9 +208,6 @@ const Media = () => {
         });
       }, 200);
 
-      setMessage('Processing your media plan...');
-      setMessageType('info');
-
       // Send request to backend
       const response = await axios.post('https://xr-media-plan-api.onrender.com/api/generate', formData, {
         headers: {
@@ -238,20 +229,14 @@ const Media = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      setMessage('Media plan generated and downloaded successfully!');
-      setMessageType('success');
-      
       // Reset all form fields after successful generation
       setTimeout(() => {
         resetAllFields();
-        setMessage('');
-        setMessageType('');
       }, 2000);
       
     } catch (error) {
       console.error('Generation error:', error);
-      setMessage(error.response?.data?.error || 'Failed to generate media plan');
-      setMessageType('error');
+      // Error handling can be added here if needed in the future
     } finally {
       setProcessing(false);
       setTimeout(() => {
