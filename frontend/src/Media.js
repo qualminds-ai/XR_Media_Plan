@@ -380,6 +380,8 @@ const Media = () => {
                 <option value="0">Select Creative</option>
                 <option value="PLLF">PLLF</option>
                 <option value="BH">BH</option>
+                <option value="XYZ">XYZ</option>
+                 <option value="PQR">PQR</option>
                 
               </select>
             </div>
